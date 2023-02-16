@@ -24,6 +24,7 @@
     <module>UserAuthenticationService</module>
     <module>UserTrackService</module>
     <module>ApiGateway</module>
+    <module>EurekaServer</module>
   </modules>
 
   <dependencies>
