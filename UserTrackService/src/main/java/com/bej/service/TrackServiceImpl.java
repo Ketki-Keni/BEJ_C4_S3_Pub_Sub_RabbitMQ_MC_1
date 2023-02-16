@@ -10,8 +10,10 @@ import com.bej.domain.Track;
 import com.bej.domain.User;
 import com.bej.exception.TrackAlreadyExistsException;
 import com.bej.exception.TrackNotFoundException;
+import com.bej.proxy.UserProxy;
 import com.bej.repository.TrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -21,14 +23,22 @@ import java.util.List;
 public class TrackServiceImpl implements TrackService{
     TrackRepository trackRepository;
 
+    UserProxy userProxy;
+
     @Autowired
-    public TrackServiceImpl(TrackRepository trackRepository) {
+    public TrackServiceImpl(TrackRepository trackRepository, UserProxy userProxy) {
         this.trackRepository = trackRepository;
+        this.userProxy = userProxy;
     }
 
     @Override
     public User registerUser(User user)  {
-        return trackRepository.save(user);
+        User newUser = trackRepository.save(user);
+        if (!(newUser.getEmail().isEmpty())){
+            ResponseEntity responseEntity= userProxy.saveUserInAuthService(newUser);
+            System.out.println(responseEntity.getBody());
+        }
+        return newUser;
     }
 
     @Override
