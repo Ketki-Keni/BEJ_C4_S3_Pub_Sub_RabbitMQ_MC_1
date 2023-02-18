@@ -6,25 +6,33 @@
 
 package com.bej.service;
 
+import com.bej.config.TrackDTO;
 import com.bej.domain.Track;
 import com.bej.domain.User;
 import com.bej.exception.TrackAlreadyExistsException;
 import com.bej.exception.TrackNotFoundException;
 import com.bej.proxy.UserProxy;
 import com.bej.repository.TrackRepository;
+import org.json.simple.JSONObject;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class TrackServiceImpl implements TrackService{
     TrackRepository trackRepository;
-
     UserProxy userProxy;
 
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+    @Autowired
+    DirectExchange exchange;
     @Autowired
     public TrackServiceImpl(TrackRepository trackRepository, UserProxy userProxy) {
         this.trackRepository = trackRepository;
@@ -58,12 +66,11 @@ public class TrackServiceImpl implements TrackService{
 
     @Override
     public User deleteTrack(String email, String trackId) throws TrackNotFoundException {
-        boolean movieIdIsPresent = false;
+        boolean trackIdIsPresent = false;
         User user = trackRepository.findById(email).get();
         List<Track> tracks = user.getTrackList();
-        movieIdIsPresent = tracks.removeIf(x->x.getTrackId().equals(trackId));
-        tracks.get(0).getTrackName().equals(trackId);
-        if(!movieIdIsPresent)
+        trackIdIsPresent = tracks.removeIf(x->x.getTrackId().equals(trackId));
+        if(!trackIdIsPresent)
         {
             throw new TrackNotFoundException();
         }
@@ -73,8 +80,20 @@ public class TrackServiceImpl implements TrackService{
 
     @Override
     public List<Track> getAllTracks(String email) {
-        return trackRepository.findById(email).get().getTrackList();
+
+        TrackDTO trackDTO = new TrackDTO();
+        List<Track> tracks= trackRepository.findById(email).get().getTrackList();
+        List<Track> notListenedToTracks = new ArrayList<>();
+        for (Track track : tracks) {
+            if (!track.isListened()){
+                notListenedToTracks.add(track);
+            }
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("notListenedToTracks",notListenedToTracks);
+        jsonObject.put("email", email);
+        trackDTO.setJsonObject(jsonObject);
+        rabbitTemplate.convertAndSend(exchange.getName(),"track-routing",trackDTO);
+        return tracks;
     }
-
-
 }

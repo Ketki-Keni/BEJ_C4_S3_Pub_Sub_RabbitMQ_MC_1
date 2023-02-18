@@ -14,15 +14,16 @@ public class Track {
     private String trackName;
     private String trackArtist;
     private int trackRating;
-
+    private boolean listened;
     public Track() {
     }
 
-    public Track(String trackId, String trackName, String trackArtist, int trackRating) {
+    public Track(String trackId, String trackName, String trackArtist, int trackRating, boolean listened) {
         this.trackId = trackId;
         this.trackName = trackName;
         this.trackArtist = trackArtist;
         this.trackRating = trackRating;
+        this.listened = listened;
     }
 
     public String getTrackId() {
@@ -57,13 +58,22 @@ public class Track {
         this.trackRating = trackRating;
     }
 
+    public boolean isListened() {
+        return listened;
+    }
+
+    public void setListened(boolean listened) {
+        this.listened = listened;
+    }
+
     @Override
     public String toString() {
         return "Track{" +
-                "trackId=" + trackId +
+                "trackId='" + trackId + '\'' +
                 ", trackName='" + trackName + '\'' +
                 ", trackArtist='" + trackArtist + '\'' +
                 ", trackRating=" + trackRating +
+                ", listened=" + listened +
                 '}';
     }
 }
